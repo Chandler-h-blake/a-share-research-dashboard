@@ -1,0 +1,23 @@
+# Secrets
+.env
+.env.*
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.pytest_cache/
+.matplotlib/
+
+# Local environments
+.venv/
+.venv-*/
+conda-meta/
+
+# Temporary generated files
+week2/data/cache/
