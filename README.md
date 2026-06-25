@@ -1,6 +1,6 @@
 # AI驱动A股中长期投研看板
 
-一个围绕 A 股中长期投研看板搭建的实习学习项目。当前完成了第 1 周到第 3 周的内容：先补金融基础，再学习数据获取与处理，最后用 Streamlit 搭建市场概览看板
+一个围绕 A 股中长期投研看板搭建的实习学习项目。当前已经推进到第 4 周：前 3 周完成了金融基础学习、A 股数据获取与处理、Streamlit 市场概览看板；第 4 周正在搭建因子研究与多因子选股模型。
 
 ## 当前进度
 
@@ -57,6 +57,51 @@
 
 如果真实接口失败，页面会自动回退到静态备用数据，避免整个看板打不开。
 
+### Week 4：因子研究与多因子选股模型
+
+已完成：
+
+- `week4/因子研究.md`：因子投资基础学习笔记
+- `week4/factors.py`：A 股因子库和因子计算模块
+- `week4/factor_ranking.py`：原始因子批量计算脚本
+- `week4/factor_scoring.py`：多因子标准化、方向调整、加权打分和排名脚本
+- `week4/build_hs300_universe.py`：沪深300股票池生成脚本
+- `week4/validate_factor_data.py`：观察股票池数据获取验证脚本
+- `week4/第四周周报.md`：第四周阶段周报
+
+当前因子模型已经落地 9 个原始因子：
+
+- 动量：20 日动量、换手率变化
+- 价值：PE 分位数、PB 分位数
+- 质量：ROE、毛利率
+- 成长：营收同比增长率、净利润同比增长率
+- 波动：60 日年化波动率
+
+当前已经完成两个范围的因子计算：
+
+- 10 只观察股票池：已生成 `factor_raw.csv`、`factor_scores.csv`、`top_stock_pool.csv`
+- 沪深300股票池：已生成 `hs300_factor_raw.csv`、`hs300_factor_scores.csv`、`hs300_top30_stock_pool.csv`
+
+沪深300当前结果：
+
+- `week4/data/hs300_universe.csv`：300 只股票
+- `week4/data/hs300_factor_raw.csv`：300 只股票的原始因子表
+- `week4/data/hs300_factor_scores.csv`：300 只股票的完整打分表
+- `week4/data/hs300_top30_stock_pool.csv`：沪深300多因子 TOP30 股票池
+- `week4/data/hs300_factor_errors.csv`：错误记录表，当前无失败记录
+
+当前沪深300 TOP5 为：
+
+| 排名 | 代码 | 名称 | 综合得分 |
+| ---: | --- | --- | ---: |
+| 1 | 002558 | 巨人网络 | 1.0439 |
+| 2 | 688111 | 金山办公 | 0.9814 |
+| 3 | 300308 | 中际旭创 | 0.9433 |
+| 4 | 002709 | 天赐材料 | 0.8581 |
+| 5 | 600519 | 贵州茅台 | 0.8534 |
+
+注意：当前多因子权重仍是第一版人工设定，结果主要用于验证“数据获取 -> 因子计算 -> 标准化 -> 加权打分 -> 股票池输出”的完整链路。后续还需要用 IC、分层回测和样本外验证来评估因子有效性。
+
 ## 运行方式
 
 当前使用 conda 环境：
@@ -83,6 +128,43 @@ streamlit run week3/dashboard_v1.py
 streamlit run week3/dashboard_v1_static.py
 ```
 
+生成沪深300股票池：
+
+```bash
+python week4/build_hs300_universe.py
+```
+
+计算沪深300原始因子：
+
+```bash
+python week4/factor_ranking.py \
+  --universe week4/data/hs300_universe.csv \
+  --output week4/data/hs300_factor_raw.csv \
+  --errors week4/data/hs300_factor_errors.csv \
+  --cache-dir week4/data/cache
+```
+
+如果中途因为网络或接口问题失败，可以断点续跑：
+
+```bash
+python week4/factor_ranking.py \
+  --universe week4/data/hs300_universe.csv \
+  --output week4/data/hs300_factor_raw.csv \
+  --errors week4/data/hs300_factor_errors.csv \
+  --cache-dir week4/data/cache \
+  --resume
+```
+
+生成沪深300多因子得分和 TOP30 股票池：
+
+```bash
+python week4/factor_scoring.py \
+  --input week4/data/hs300_factor_raw.csv \
+  --scores week4/data/hs300_factor_scores.csv \
+  --top week4/data/hs300_top30_stock_pool.csv \
+  --top-n 30
+```
+
 ## 数据源说明
 
 项目主要使用 AkShare 获取 A 股数据。AkShare 底层数据来自东方财富、新浪财经、申万等公开数据源。
@@ -93,6 +175,7 @@ streamlit run week3/dashboard_v1_static.py
 
 接下来计划继续推进：
 
-- 完善第三周看板截图和周报说明
-- 优化看板布局和交互体验
-- 在第 4 周开始学习因子研究和多因子选股模型
+- 增加 `factor_backtest.ipynb` 或回测脚本，做 IC 检验和分层回测
+- 根据因子有效性结果调整多因子权重
+- 将多因子 TOP30、行业分布和因子贡献接入投研看板
+- 继续优化第三周看板布局和交互体验
