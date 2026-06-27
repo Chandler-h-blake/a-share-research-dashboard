@@ -67,7 +67,6 @@
 - `week4/factor_scoring.py`：多因子标准化、方向调整、加权打分和排名脚本
 - `week4/build_hs300_universe.py`：沪深300股票池生成脚本
 - `week4/validate_factor_data.py`：观察股票池数据获取验证脚本
-- `week4/第四周周报.md`：第四周阶段周报
 
 当前因子模型已经落地 9 个原始因子：
 
@@ -89,6 +88,10 @@
 - `week4/data/hs300_factor_scores.csv`：300 只股票的完整打分表
 - `week4/data/hs300_top30_stock_pool.csv`：沪深300多因子 TOP30 股票池
 - `week4/data/hs300_factor_errors.csv`：错误记录表，当前无失败记录
+- `week4/data/final_factor_scores.csv`：后续看板默认读取的最终得分表
+- `week4/data/final_top30_stock_pool.csv`：后续看板默认读取的最终 TOP30 股票池
+- `week4/data/final_factor_weights.json`：最终因子权重配置
+- `week4/data/final_factor_overview.csv`：因子说明、权重和回测验证指标汇总
 
 当前沪深300 TOP5 为：
 
@@ -175,7 +178,6 @@ python week4/factor_scoring.py \
 
 接下来计划继续推进：
 
-- 增加 `factor_backtest.ipynb` 或回测脚本，做 IC 检验和分层回测
+- 增加factor_system.py模块，作为第四周程序主入口
 - 根据因子有效性结果调整多因子权重
 - 将多因子 TOP30、行业分布和因子贡献接入投研看板
-- 继续优化第三周看板布局和交互体验
