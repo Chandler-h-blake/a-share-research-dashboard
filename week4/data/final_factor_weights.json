@@ -1,0 +1,91 @@
+{
+  "version": "v2_week4_final",
+  "generated_at": "2026-07-02T02:50:03",
+  "basis": "20260410、20260430、20260508、20260520 四个截面的 20 日收益 IC 与五组分层验证",
+  "weight_sum": 1.0,
+  "weights": {
+    "momentum_20d": 0.2,
+    "turnover_change": 0.07,
+    "pe_percentile": 0.04,
+    "pb_percentile": 0.04,
+    "roe": 0.15,
+    "gross_margin": 0.1,
+    "revenue_growth_yoy": 0.22,
+    "net_profit_growth_yoy": 0.13,
+    "volatility_60d": 0.05
+  },
+  "factors": [
+    {
+      "factor": "momentum_20d",
+      "name": "月度动量",
+      "category": "动量",
+      "direction": 1,
+      "weight": 0.2,
+      "description": "过去20个交易日涨跌幅，越高说明近期走势越强。"
+    },
+    {
+      "factor": "turnover_change",
+      "name": "换手率变化",
+      "category": "动量",
+      "direction": 1,
+      "weight": 0.07,
+      "description": "近5日平均换手率相对近20日平均换手率的变化。"
+    },
+    {
+      "factor": "pe_percentile",
+      "name": "PE分位数",
+      "category": "价值",
+      "direction": -1,
+      "weight": 0.04,
+      "description": "当前PE在历史PE中的分位，越低通常越便宜。"
+    },
+    {
+      "factor": "pb_percentile",
+      "name": "PB分位数",
+      "category": "价值",
+      "direction": -1,
+      "weight": 0.04,
+      "description": "当前PB在历史PB中的分位，越低通常越便宜。"
+    },
+    {
+      "factor": "roe",
+      "name": "ROE",
+      "category": "质量",
+      "direction": 1,
+      "weight": 0.15,
+      "description": "净资产收益率，衡量公司用股东权益赚钱的能力。"
+    },
+    {
+      "factor": "gross_margin",
+      "name": "毛利率",
+      "category": "质量",
+      "direction": 1,
+      "weight": 0.1,
+      "description": "毛利润占营业收入比例，反映业务盈利空间。"
+    },
+    {
+      "factor": "revenue_growth_yoy",
+      "name": "营收增长率",
+      "category": "成长",
+      "direction": 1,
+      "weight": 0.22,
+      "description": "营业收入同比增长率。"
+    },
+    {
+      "factor": "net_profit_growth_yoy",
+      "name": "净利润增长率",
+      "category": "成长",
+      "direction": 1,
+      "weight": 0.13,
+      "description": "净利润同比增长率。"
+    },
+    {
+      "factor": "volatility_60d",
+      "name": "60日波动率",
+      "category": "波动",
+      "direction": -1,
+      "weight": 0.05,
+      "description": "近60日收益率标准差，越低说明短期波动越小。"
+    }
+  ]
+}
