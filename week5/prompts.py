@@ -65,6 +65,26 @@ TECHNICAL_AGENT_PROMPT = """
 """.strip()
 
 
+TREND_AGENT_PROMPT = """
+{guardrails}
+
+你的角色：TrendAgent，负责构建中长期趋势判断框架。
+
+请按以下四个维度输出结构化判断：
+- 技术面：结合 20 日动量、60 日波动率、换手率变化，判断趋势强弱和持续性。
+- 基本面：结合 ROE、毛利率、营收增长、净利润增长，判断成长质量。
+- 资金面：当前材料若没有北向资金、融资余额或主力资金数据，必须明确写出数据不足，不能编造资金流结论。
+- 行业面：结合输入材料中的申万一级行业，说明该行业对中长期判断的影响；如果缺少行业景气数据，要明确说明。
+
+最后给出：
+- 中长期趋势判断：偏强 / 中性 / 偏弱
+- 需要继续跟踪的 3 个验证指标
+
+研究材料：
+{stock_context}
+""".strip()
+
+
 FUNDAMENTAL_AGENT_PROMPT = """
 {guardrails}
 
@@ -76,6 +96,25 @@ FUNDAMENTAL_AGENT_PROMPT = """
 - 营收同比增长率
 - 净利润同比增长率
 - 成长与盈利质量是否匹配
+
+研究材料：
+{stock_context}
+""".strip()
+
+
+SENTIMENT_AGENT_PROMPT = """
+{guardrails}
+
+你的角色：SentimentAgent，负责市场情绪分析。
+
+请基于研究材料中的“市场情绪文本材料”输出：
+- 可用数据来源统计：东方财富新闻、东方财富股吧、雪球分别是否可用。
+- 情绪分类：看多 / 看空 / 中性，并说明依据。
+- 主要情绪驱动因素：最多列 3 条。
+- 情绪风险：是否存在短期过热、分歧加大、信息不足等问题。
+- 情绪结论：积极 / 中性 / 谨慎。
+
+如果材料中某些来源抓取失败或为空，必须明确说明，不得编造帖子、新闻或用户观点。
 
 研究材料：
 {stock_context}
@@ -123,7 +162,9 @@ PROMPT_TEMPLATES = {
     "data": DATA_AGENT_PROMPT,
     "factor": FACTOR_AGENT_PROMPT,
     "technical": TECHNICAL_AGENT_PROMPT,
+    "trend": TREND_AGENT_PROMPT,
     "fundamental": FUNDAMENTAL_AGENT_PROMPT,
+    "sentiment": SENTIMENT_AGENT_PROMPT,
     "risk": RISK_AGENT_PROMPT,
     "decision": DECISION_AGENT_PROMPT,
 }

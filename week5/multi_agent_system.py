@@ -70,8 +70,14 @@ class LLMAgents:
     def technical_agent(self, context: StockContext) -> AgentOutput:
         return AgentOutput("TechnicalAgent", "技术面和量价状态", self._run_prompt("technical", context))
 
+    def trend_agent(self, context: StockContext) -> AgentOutput:
+        return AgentOutput("TrendAgent", "中长期趋势判断框架", self._run_prompt("trend", context))
+
     def fundamental_agent(self, context: StockContext) -> AgentOutput:
         return AgentOutput("FundamentalAgent", "基本面质量和成长", self._run_prompt("fundamental", context))
+
+    def sentiment_agent(self, context: StockContext) -> AgentOutput:
+        return AgentOutput("SentimentAgent", "市场情绪分析", self._run_prompt("sentiment", context))
 
     def risk_agent(self, context: StockContext) -> AgentOutput:
         return AgentOutput("RiskAgent", "风险识别", self._run_prompt("risk", context))
@@ -99,6 +105,8 @@ def run_agents_for_stock(context: StockContext, agents: LLMAgents) -> list[Agent
         agents.technical_agent(context),
         agents.fundamental_agent(context),
         agents.risk_agent(context),
+        agents.trend_agent(context),
+        agents.sentiment_agent(context),
     ]
     outputs.append(agents.decision_agent(context, outputs))
     return outputs
@@ -183,6 +191,8 @@ def write_reports(
     backend: str,
 ) -> list[Path]:
     output_dir.mkdir(parents=True, exist_ok=True)
+    for old_report in output_dir.glob("*_report.md"):
+        old_report.unlink()
     written: list[Path] = []
     summary_sections = [
         "# 第五周 TOP5 股票 LLM 多 Agent 深度研报汇总",
@@ -192,7 +202,7 @@ def write_reports(
         "",
         "本汇总报告基于第四周沪深300多因子 TOP 股票池生成。"
         "每只股票均由 LLM 驱动的 DataAgent、FactorAgent、TechnicalAgent、"
-        "FundamentalAgent、RiskAgent 和 DecisionAgent 分析。",
+        "FundamentalAgent、RiskAgent、TrendAgent、SentimentAgent 和 DecisionAgent 分析。",
         "",
         "> 说明：本报告仅用于课程学习和投研流程演示，不构成投资建议。",
         "",
@@ -211,6 +221,7 @@ def write_reports(
                 "",
                 f"# {context.name}（{context.symbol}）",
                 "",
+                f"- 行业：{context.industry}",
                 f"- 多因子排名：第 {context.rank} 名",
                 f"- 综合得分：{context.composite_score:.4f}",
                 f"- 单股报告：`outputs/{report_filename(context)}`",

@@ -10,8 +10,9 @@
 6. 输出精选股票池 top_stock_pool.csv
 
 注意：
-这里做的是课程项目里的第一版多因子打分系统。权重是人为设定的，
-后面可以结合 IC、分层回测结果再调整。
+这里做的是课程项目里的多因子打分系统。当前默认权重是第四周最终版，
+依据 20260410、20260430、20260508、20260520 四个截面的 IC 和五组
+分层收益验证后确定。
 """
 
 from __future__ import annotations
@@ -30,19 +31,22 @@ DEFAULT_SCORE_PATH = ROOT / "week4/data/factor_scores.csv"
 DEFAULT_TOP_PATH = ROOT / "week4/data/top_stock_pool.csv"
 
 
-# 4.3 第一版权重。
-# 权重总和为 1。这里把价值、质量、成长、动量和风险都放进去，
-# 避免模型只偏向某一个角度。
+# 第四周最终版权重。
+# 设计原则：
+# 1. 营收增长率、月度动量在四个截面中 IC 和分层表现最稳定，因此权重最高；
+# 2. ROE、净利润增长率、毛利率保留为质量/成长辅助；
+# 3. PE/PB 和波动率在本次 20 日窗口验证中表现偏弱，但仍保留小权重作为
+#    估值和风险约束，避免组合完全变成短期成长动量。
 FACTOR_WEIGHTS: dict[str, float] = {
-    "momentum_20d": 0.15,
-    "turnover_change": 0.08,
-    "pe_percentile": 0.12,
-    "pb_percentile": 0.10,
+    "momentum_20d": 0.20,
+    "turnover_change": 0.07,
+    "pe_percentile": 0.04,
+    "pb_percentile": 0.04,
     "roe": 0.15,
-    "gross_margin": 0.12,
-    "revenue_growth_yoy": 0.10,
-    "net_profit_growth_yoy": 0.10,
-    "volatility_60d": 0.08,
+    "gross_margin": 0.10,
+    "revenue_growth_yoy": 0.22,
+    "net_profit_growth_yoy": 0.13,
+    "volatility_60d": 0.05,
 }
 
 

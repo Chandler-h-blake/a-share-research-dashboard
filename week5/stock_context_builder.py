@@ -17,6 +17,8 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_TOP_POOL_PATH = ROOT / "week4/data/final_top30_stock_pool.csv"
 DEFAULT_FACTOR_SCORES_PATH = ROOT / "week4/data/final_factor_scores.csv"
 DEFAULT_FACTOR_OVERVIEW_PATH = ROOT / "week4/data/final_factor_overview.csv"
+DEFAULT_INDUSTRY_MAPPING_PATH = ROOT / "week5/industry_mapping.csv"
+DEFAULT_SENTIMENT_INPUT_DIR = ROOT / "week5/sentiment_inputs"
 
 
 FACTOR_COLUMNS = [
@@ -65,6 +67,7 @@ class StockContext:
     positive_contributors: list[FactorItem]
     negative_contributors: list[FactorItem]
     warnings: list[str]
+    sentiment_records: list[dict[str, str]]
 
 
 def _read_csv(path: Path, dtype: dict[str, Any] | None = None) -> pd.DataFrame:
@@ -89,6 +92,87 @@ def _clean_industry(value: Any) -> str:
     if not text or text.lower() == "unknown":
         return "未识别"
     return text
+
+
+def load_industry_mapping(path: Path = DEFAULT_INDUSTRY_MAPPING_PATH) -> dict[str, str]:
+    """读取第五周轻量行业映射表。
+
+    第四周 final 文件中的行业字段目前大量为 unknown。为了避免重跑前四周
+    数据流程，这里只在第五周补一个小映射表，优先服务 TOP 研报股票。
+    """
+
+    if not path.exists():
+        return {}
+
+    mapping_df = _read_csv(path, dtype={"symbol": str})
+    required_columns = {"symbol", "industry"}
+    missing_columns = required_columns - set(mapping_df.columns)
+    if missing_columns:
+        raise ValueError(f"行业映射表缺少字段：{sorted(missing_columns)}")
+
+    mapping: dict[str, str] = {}
+    for _, row in mapping_df.iterrows():
+        symbol = str(row["symbol"]).zfill(6)
+        industry = _clean_industry(row["industry"])
+        if industry != "未识别":
+            mapping[symbol] = industry
+    return mapping
+
+
+def resolve_industry(raw_value: Any, symbol: str, industry_mapping: dict[str, str]) -> str:
+    """优先使用原始行业；若为 unknown，则使用第五周映射表补充。"""
+
+    raw_industry = _clean_industry(raw_value)
+    if raw_industry != "未识别":
+        return raw_industry
+    return industry_mapping.get(str(symbol).zfill(6), raw_industry)
+
+
+def load_sentiment_records(
+    symbol: str,
+    sentiment_input_dir: Path = DEFAULT_SENTIMENT_INPUT_DIR,
+    max_records: int = 18,
+) -> list[dict[str, str]]:
+    """读取市场情绪文本材料。
+
+    情绪抓取脚本会把真实抓取结果和失败留痕都写入 CSV。这里不做情绪
+    判断，只把材料原样整理进 StockContext，交给 SentimentAgent 分析。
+    """
+
+    path = sentiment_input_dir / f"{str(symbol).zfill(6)}_sentiment_texts.csv"
+    if not path.exists():
+        return [
+            {
+                "source": "sentiment_fetcher",
+                "title": "",
+                "content": "",
+                "url": "",
+                "publish_time": "",
+                "fetch_status": f"missing_file: {path}",
+            }
+        ]
+
+    records_df = _read_csv(path, dtype={"symbol": str})
+    required_columns = {"source", "title", "content", "url", "publish_time", "fetch_status"}
+    missing_columns = required_columns - set(records_df.columns)
+    if missing_columns:
+        raise ValueError(f"情绪文本文件缺少字段：{sorted(missing_columns)}")
+
+    records: list[dict[str, str]] = []
+    for _, row in records_df.head(max_records).iterrows():
+        records.append(
+            {
+                "source": str(row.get("source", "")).strip(),
+                "title": "" if pd.isna(row.get("title")) else str(row.get("title", "")).strip(),
+                "content": "" if pd.isna(row.get("content")) else str(row.get("content", "")).strip(),
+                "url": "" if pd.isna(row.get("url")) else str(row.get("url", "")).strip(),
+                "publish_time": ""
+                if pd.isna(row.get("publish_time"))
+                else str(row.get("publish_time", "")).strip(),
+                "fetch_status": str(row.get("fetch_status", "")).strip(),
+            }
+        )
+    return records
 
 
 def load_week4_data(
@@ -131,10 +215,13 @@ def build_stock_context(
     symbol: str,
     factor_scores: pd.DataFrame,
     factor_overview: pd.DataFrame,
+    industry_mapping: dict[str, str] | None = None,
+    sentiment_input_dir: Path = DEFAULT_SENTIMENT_INPUT_DIR,
 ) -> StockContext:
     """为单只股票构建统一研究材料包。"""
 
     symbol = str(symbol).zfill(6)
+    industry_mapping = industry_mapping or {}
     rows = factor_scores[factor_scores["symbol"].astype(str).str.zfill(6) == symbol]
     if rows.empty:
         raise ValueError(f"因子得分表中找不到股票：{symbol}")
@@ -196,7 +283,7 @@ def build_stock_context(
     return StockContext(
         symbol=symbol,
         name=str(stock["name"]),
-        industry=_clean_industry(stock.get("industry")),
+        industry=resolve_industry(stock.get("industry"), symbol, industry_mapping),
         rank=int(stock["rank"]),
         composite_score=float(stock["composite_score"]),
         factor_items=factor_items,
@@ -204,6 +291,7 @@ def build_stock_context(
         positive_contributors=positive,
         negative_contributors=negative,
         warnings=warnings,
+        sentiment_records=load_sentiment_records(symbol, sentiment_input_dir),
     )
 
 
@@ -241,8 +329,9 @@ def build_contexts(top_n: int = 5) -> list[StockContext]:
     """构建 TOP N 股票的研究上下文列表。"""
 
     top_pool, factor_scores, factor_overview = load_week4_data()
+    industry_mapping = load_industry_mapping()
     return [
-        build_stock_context(symbol, factor_scores, factor_overview)
+        build_stock_context(symbol, factor_scores, factor_overview, industry_mapping)
         for symbol in get_top_symbols(top_pool, top_n=top_n)
     ]
 
@@ -297,6 +386,26 @@ def context_to_markdown(context: StockContext) -> str:
     lines.extend(["", "### 数据提醒", ""])
     for warning in context.warnings:
         lines.append(f"- {warning}")
+
+    lines.extend(["", "### 市场情绪文本材料", ""])
+    if not context.sentiment_records:
+        lines.append("- 未读取到市场情绪文本材料。")
+    else:
+        for index, record in enumerate(context.sentiment_records, start=1):
+            title = record.get("title") or "无标题"
+            content = record.get("content") or ""
+            if len(content) > 180:
+                content = content[:180] + "..."
+            lines.append(
+                f"{index}. 来源：{record.get('source', '')}；"
+                f"状态：{record.get('fetch_status', '')}；"
+                f"时间：{record.get('publish_time', '') or 'N/A'}；"
+                f"标题：{title}"
+            )
+            if content:
+                lines.append(f"   摘要：{content}")
+            if record.get("url"):
+                lines.append(f"   链接：{record['url']}")
 
     return "\n".join(lines)
 

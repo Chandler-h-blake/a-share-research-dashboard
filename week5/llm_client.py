@@ -33,7 +33,7 @@ class LLMClient:
 
     - LLM_API_KEY_ENV=DEEPSEEK_API_KEY
     - LLM_BASE_URL=https://api.deepseek.com/chat/completions
-    - LLM_MODEL=deepseek-chat
+    - LLM_MODEL=deepseek-reasoner
     """
 
     def __init__(self, config: LLMConfig | None = None) -> None:

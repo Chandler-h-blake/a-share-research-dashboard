@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 from pathlib import Path
 
@@ -39,6 +40,13 @@ def _cache_name(symbol: str, data_type: str, extra: str = "") -> str:
     return f"{data_type}_{symbol}{safe_extra}.csv"
 
 
+def _daily_file_covers(path: Path, start_date: str, asof_date: str) -> bool:
+    matched = re.fullmatch(r"daily_\d+_(\d{8})_(\d{8})_qfq\.csv", path.name)
+    if matched:
+        return matched.group(1) <= start_date and matched.group(2) >= asof_date
+    return False
+
+
 def _read_or_fetch_daily(
     symbol: str,
     start_date: str,
@@ -51,11 +59,14 @@ def _read_or_fetch_daily(
         return pd.read_csv(exact)
 
     for path in sorted(cache_dir.glob(f"daily_{symbol}_*_qfq.csv")):
+        if _daily_file_covers(path, start_date, asof_date):
+            return pd.read_csv(path)
+
         frame = pd.read_csv(path)
         if "date" not in frame.columns:
             continue
         dates = pd.to_datetime(frame["date"], errors="coerce")
-        if dates.min() <= pd.to_datetime(start_date) and dates.max() >= pd.to_datetime(asof_date):
+        if dates.min() <= pd.to_datetime(asof_date) and dates.max() >= pd.to_datetime(asof_date):
             return frame
 
     frame = get_daily_data(symbol, start_date, asof_date, adjust="qfq")

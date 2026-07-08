@@ -13,6 +13,8 @@ __pycache__/
 .ipynb_checkpoints/
 .pytest_cache/
 .matplotlib/
+.mypy_cache/
+.ruff_cache/
 
 # Local environments
 .venv/
@@ -21,3 +23,29 @@ conda-meta/
 
 # Temporary generated files
 week2/data/cache/
+week4/data/cache/
+
+# Generated bulk backtest snapshots.
+# Keep already-tracked curated snapshots in Git if needed, but do not add every
+# newly generated date slice by accident.
+week4/data/backtest/factor_errors_*.csv
+week4/data/backtest/factor_group_return_*.csv
+week4/data/backtest/factor_group_summary_*.csv
+week4/data/backtest/factor_ic_*.csv
+week4/data/backtest/factor_raw_*.csv
+week4/data/backtest/factor_scores_*.csv
+week4/data/backtest/factor_with_forward_returns_*.csv
+week4/data/backtest/forward_return_errors_*.csv
+week4/data/backtest/forward_returns_*.csv
+week4/data/backtest/top30_stock_pool_*.csv
+week4/data/backtest/multi_snapshot_*.csv
+
+# Generated runtime diagnostics / scrape inputs
+week5/industry_mapping_errors.csv
+week5/sentiment_inputs/
+
+# Local logs and ad-hoc exports
+*.log
+*.tmp
+tmp/
+exports/
